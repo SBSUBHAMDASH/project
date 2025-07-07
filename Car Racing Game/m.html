@@ -75,9 +75,11 @@
       margin: 20px 0;
       display: flex;
       gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
-    .btn, .touch-btn {
+    .btn {
       padding: 12px 20px;
       font-size: xx-large;
       background: #45a29e;
@@ -89,14 +91,14 @@
       transition: 0.3s;
     }
 
-    .btn:hover, .touch-btn:hover {
+    .btn:hover {
       background: #66fcf1;
       color: #1f2833;
       box-shadow: 0 0 20px #66fcf1;
     }
 
     .touch-controls {
-      margin-bottom: 20px;
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -110,34 +112,35 @@
   </div>
 
   <div class="touch-controls">
-    <button class="touch-btn" id="upBtn">⬆️ Move Up</button>
+    <button class="btn" id="forwardBtn">⬆️ Forward</button>
   </div>
 
   <div class="buttons">
     <button class="btn" id="resetBtn">Reset Game</button>
-    <button class="btn" onclick="location.href='about:blank'">Main</button>
+    <button class="btn" onclick="location.href='../index.html'">Main</button>
   </div>
 
   <script>
     const car1 = document.getElementById('car1');
     const car2 = document.getElementById('car2');
     const result = document.getElementById('result');
-    const upBtn = document.getElementById('upBtn');
+    const forwardBtn = document.getElementById('forwardBtn');
 
     let car1Top, car2Top, gameOver;
-    let moveInterval;
-    let speed = 5;
+    let car1Speed = 0;
+    let accelerating = false;
     const finishLine = 20;
 
     function init() {
       car1Top = 900;
       car2Top = 900;
-      speed = 5;
+      car1Speed = 0;
+      accelerating = false;
       gameOver = false;
       result.style.display = 'none';
       updateCarPositions();
-      stopMovingUp(); // prevent ghost movement
       moveComputerCar();
+      animatePlayer();
     }
 
     function updateCarPositions() {
@@ -153,25 +156,22 @@
       requestAnimationFrame(moveComputerCar);
     }
 
-    function moveCarUp() {
-      if (!gameOver && car1Top > finishLine) {
-        car1Top -= speed;
+    function animatePlayer() {
+      if (!gameOver) {
+        if (accelerating) {
+          if (car1Speed < 25) car1Speed += 0.5;
+        } else {
+          if (car1Speed > 0) car1Speed -= 0.8;
+        }
+
+        if (car1Top > finishLine) {
+          car1Top -= car1Speed;
+        }
+
         updateCarPositions();
         checkWinner();
-        if (speed < 50) {
-          speed += 1; // acceleration
-        }
+        requestAnimationFrame(animatePlayer);
       }
-    }
-
-    function startMovingUp() {
-      stopMovingUp();
-      speed = 5;
-      moveInterval = setInterval(moveCarUp, 50); // 20 fps
-    }
-
-    function stopMovingUp() {
-      clearInterval(moveInterval);
     }
 
     function checkWinner() {
@@ -179,43 +179,39 @@
         result.textContent = "🚗 You Win!";
         result.style.display = 'block';
         gameOver = true;
-        stopMovingUp();
       } else if (car2Top <= finishLine) {
         result.textContent = "💻 Computer Wins!";
         result.style.display = 'block';
         gameOver = true;
-        stopMovingUp();
       }
     }
 
-    // Touch & Mouse Events
-    upBtn.addEventListener('mousedown', startMovingUp);
-    upBtn.addEventListener('mouseup', stopMovingUp);
-    upBtn.addEventListener('mouseleave', stopMovingUp);
-
-    upBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      startMovingUp();
-    }, { passive: false });
-
-    upBtn.addEventListener('touchend', stopMovingUp);
-    upBtn.addEventListener('touchcancel', stopMovingUp);
-
-    // Keyboard Events
+    // Keyboard Controls
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' && !gameOver) {
-        startMovingUp();
-      }
+      if (e.key === 'ArrowUp') accelerating = true;
     });
 
     document.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowUp') {
-        stopMovingUp();
-      }
+      if (e.key === 'ArrowUp') accelerating = false;
     });
 
+    // Touch/Mouse Controls for Forward Button
+    forwardBtn.addEventListener('mousedown', () => accelerating = true);
+    forwardBtn.addEventListener('mouseup', () => accelerating = false);
+    forwardBtn.addEventListener('mouseleave', () => accelerating = false);
+
+    forwardBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      accelerating = true;
+    }, { passive: false });
+
+    forwardBtn.addEventListener('touchend', () => accelerating = false);
+    forwardBtn.addEventListener('touchcancel', () => accelerating = false);
+
+    // Reset
     document.getElementById('resetBtn').addEventListener('click', init);
 
+    // Init game
     init();
 
     // Service Worker
