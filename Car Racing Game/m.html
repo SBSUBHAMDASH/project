@@ -87,7 +87,6 @@
       cursor: pointer;
       box-shadow: 0 0 15px #66fcf1;
       transition: 0.3s;
-      
     }
 
     .btn:hover, .touch-btn:hover {
@@ -110,116 +109,110 @@
     <div id="result"></div>
   </div>
 
-  <!-- 🔘 Control Buttons -->
   <div class="touch-controls">
     <button class="touch-btn" id="upBtn">⬆️ Move Up</button>
   </div>
 
   <div class="buttons">
     <button class="btn" id="resetBtn">Reset Game</button>
-    <button class="btn" onclick="location.href='../index.html'" >Main</button>
+    <button class="btn" onclick="location.href='about:blank'">Main</button>
   </div>
-<script>
-  const car1 = document.getElementById('car1');
-  const car2 = document.getElementById('car2');
-  const result = document.getElementById('result');
-  const upBtn = document.getElementById('upBtn');
 
-  let car1Top, car2Top, gameOver;
-  let moveInterval;
-  const finishLine = 20;
+  <script>
+    const car1 = document.getElementById('car1');
+    const car2 = document.getElementById('car2');
+    const result = document.getElementById('result');
+    const upBtn = document.getElementById('upBtn');
 
-  function init() {
-    car1Top = 900;
-    car2Top = 900;
-    gameOver = false;
-    result.style.display = 'none';
-    updateCarPositions();
-    stopMovingUp(); // stop if any old intervals are running
-    moveComputerCar();
-  }
+    let car1Top, car2Top, gameOver;
+    let moveInterval;
+    const finishLine = 20;
 
-  function updateCarPositions() {
-    car1.style.top = car1Top + 'px';
-    car2.style.top = car2Top + 'px';
-  }
+    function init() {
+      car1Top = 900;
+      car2Top = 900;
+      gameOver = false;
+      result.style.display = 'none';
+      updateCarPositions();
+      stopMovingUp(); // prevent ghost movement
+      moveComputerCar();
+    }
 
-  function moveComputerCar() {
-    if (gameOver) return;
-    car2Top -= Math.random() * 2 + 1;
-    updateCarPositions();
-    checkWinner();
-    requestAnimationFrame(moveComputerCar);
-  }
+    function updateCarPositions() {
+      car1.style.top = car1Top + 'px';
+      car2.style.top = car2Top + 'px';
+    }
 
-  function moveCarUp() {
-    if (!gameOver) {
-      car1Top -= 2.5;
+    function moveComputerCar() {
+      if (gameOver) return;
+      car2Top -= Math.random() * 2 + 1;
       updateCarPositions();
       checkWinner();
+      requestAnimationFrame(moveComputerCar);
     }
-  }
 
-  function startMovingUp() {
-    stopMovingUp(); // safety
-    moveCarUp(); // instant response
-    moveInterval = setInterval(moveCarUp, 50); // start continuous movement
-  }
-
-  function stopMovingUp() {
-    if (moveInterval) {
-      clearInterval(moveInterval);
-      moveInterval = null;
+    function moveCarUp() {
+      if (!gameOver) {
+        car1Top -= 2.5;
+        updateCarPositions();
+        checkWinner();
+      }
     }
-  }
 
-  function checkWinner() {
-    if (car1Top <= finishLine) {
-      result.textContent = "🚗 You Win!";
-      result.style.display = 'block';
-      gameOver = true;
+    function startMovingUp() {
       stopMovingUp();
-    } else if (car2Top <= finishLine) {
-      result.textContent = "💻 Computer Wins!";
-      result.style.display = 'block';
-      gameOver = true;
-      stopMovingUp();
-    }
-  }
-
-  // 🖱️ Mouse Events
-  upBtn.addEventListener('mousedown', startMovingUp);
-  upBtn.addEventListener('mouseup', stopMovingUp);
-  upBtn.addEventListener('mouseleave', stopMovingUp);
-
-  // 📱 Touch Events
-  upBtn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    startMovingUp();
-  }, { passive: false });
-
-  upBtn.addEventListener('touchend', stopMovingUp);
-  upBtn.addEventListener('touchcancel', stopMovingUp);
-
-  // ⌨️ Keyboard Support
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp' && !gameOver) {
       moveCarUp();
+      moveInterval = setInterval(moveCarUp, 50);
     }
-  });
 
-  // 🔄 Reset Button
-  document.getElementById('resetBtn').addEventListener('click', init);
+    function stopMovingUp() {
+      if (moveInterval) {
+        clearInterval(moveInterval);
+        moveInterval = null;
+      }
+    }
 
-  init();
+    function checkWinner() {
+      if (car1Top <= finishLine) {
+        result.textContent = "🚗 You Win!";
+        result.style.display = 'block';
+        gameOver = true;
+        stopMovingUp();
+      } else if (car2Top <= finishLine) {
+        result.textContent = "💻 Computer Wins!";
+        result.style.display = 'block';
+        gameOver = true;
+        stopMovingUp();
+      }
+    }
 
-  // 📦 Register Service Worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(reg => console.log("SW Registered", reg))
-      .catch(err => console.error("SW Error", err));
-  }
-</script>
+    upBtn.addEventListener('mousedown', startMovingUp);
+    upBtn.addEventListener('mouseup', stopMovingUp);
+    upBtn.addEventListener('mouseleave', stopMovingUp);
 
+    upBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startMovingUp();
+    }, { passive: false });
+
+    upBtn.addEventListener('touchend', stopMovingUp);
+    upBtn.addEventListener('touchcancel', stopMovingUp);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' && !gameOver) {
+        moveCarUp();
+      }
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', init);
+
+    init();
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log("SW Registered", reg))
+        .catch(err => console.error("SW Error", err));
+    }
+  </script>
 </body>
 </html>
