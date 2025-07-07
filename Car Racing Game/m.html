@@ -134,7 +134,7 @@
       gameOver = false;
       result.style.display = 'none';
       updateCarPositions();
-      stopMovingUp(); // prevent ghost movement
+      stopMovingUp(); // Reset any ongoing move
       moveComputerCar();
     }
 
@@ -160,16 +160,14 @@
     }
 
     function startMovingUp() {
-      stopMovingUp();
-      moveCarUp();
-      moveInterval = setInterval(moveCarUp, 50);
+      if (moveInterval || gameOver) return;
+      moveCarUp(); // Move immediately once
+      moveInterval = setInterval(moveCarUp, 50); // Then continue moving
     }
 
     function stopMovingUp() {
-      if (moveInterval) {
-        clearInterval(moveInterval);
-        moveInterval = null;
-      }
+      clearInterval(moveInterval);
+      moveInterval = null;
     }
 
     function checkWinner() {
@@ -186,28 +184,32 @@
       }
     }
 
-    upBtn.addEventListener('mousedown', startMovingUp);
-    upBtn.addEventListener('mouseup', stopMovingUp);
-    upBtn.addEventListener('mouseleave', stopMovingUp);
-
-    upBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      startMovingUp();
-    }, { passive: false });
-
-    upBtn.addEventListener('touchend', stopMovingUp);
-    upBtn.addEventListener('touchcancel', stopMovingUp);
-
+    // Keyboard support
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowUp' && !gameOver) {
         moveCarUp();
       }
     });
 
+    // Button (mouse) long press support
+    upBtn.addEventListener('mousedown', startMovingUp);
+    upBtn.addEventListener('mouseup', stopMovingUp);
+    upBtn.addEventListener('mouseleave', stopMovingUp);
+
+    // Button (touch) long press support
+    upBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // prevents double tap zoom
+      startMovingUp();
+    }, { passive: false });
+
+    upBtn.addEventListener('touchend', stopMovingUp);
+    upBtn.addEventListener('touchcancel', stopMovingUp);
+
     document.getElementById('resetBtn').addEventListener('click', init);
 
     init();
 
+    // Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
         .then(reg => console.log("SW Registered", reg))
