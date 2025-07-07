@@ -159,9 +159,9 @@
     function animatePlayer() {
       if (!gameOver) {
         if (accelerating) {
-          if (car1Speed < 25) car1Speed += 0.5;
+          if (car1Speed < 25) car1Speed += 10;
         } else {
-          if (car1Speed > 0) car1Speed -= 0.8;
+          if (car1Speed > 0) car1Speed -= 13;
         }
 
         if (car1Top > finishLine) {
