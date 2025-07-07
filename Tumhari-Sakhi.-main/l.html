@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registration Form</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #05e92b, #f40aae);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      flex-direction: column;
+      font-size: xx-large;
+    }
+    .form-box {
+      background: rgb(20, 19, 19);
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(245, 10, 170, 0.2);
+      max-width: 400px;
+      width: 100%;
+    }
+    .form-box h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #f50288;
+    }
+    .form-box input,
+    .form-box select,
+    .form-box textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #131212;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .form-box button {
+      background: #fa06bd;
+      color: rgb(21, 21, 21);
+      padding: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+    .form-box button:hover {
+      background: #08ee26;
+    }
+    .error {
+      color: red;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    #savedData {
+      margin-top: 30px;
+      max-width: 500px;
+      width: 100%;
+      background: #f00b94;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    #savedData h3 {
+      margin-bottom: 15px;
+    }
+    .entry-box {
+      border: 1px solid #e80fec;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      background: #04e717;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-box">
+    <h2>Join the Webinar</h2>
+    <form id="webinarForm" onsubmit="return validateForm()">
+      <input type="text" id="name" placeholder="Full Name" required />
+      <input type="number" id="age" placeholder="Age (18+)" min="18" required />
+      <input type="tel" id="phone" placeholder="Phone Number (Indian)" required />
+      <input type="email" id="email" placeholder="Email Address" required />
+      <textarea id="address" placeholder="Full Address" rows="3" required></textarea>
+      <select id="gender">
+        <option value="">Select Gender (optional)</option>
+        <option>Male</option>
+        <option>Female</option>
+        <option>Other</option>
+      </select>
+      <input type="text" id="profession" placeholder="Profession (optional)" />
+
+      <div class="error" id="errorMsg"></div>
+
+      <button type="submit">Register Now</button>
+      <button type="button" onclick="showData()">Show Saved Entries</button>
+      <a onclick="exitApp()"><button>Exit</button></a>
+    </form>
+  </div>
+
+  <div id="savedData"></div>
+
+  <script>
+ function exitApp() {
+      document.body.innerHTML = `
+        <img src="c.png"width="900" height="600"></img>
+      `;
+      setTimeout(() => {
+        window.close();
+        window.location.href = "u.html";
+      }, 5000);
+    }
+    function validateForm() {
+      const phoneRegex = /^[6-9]\d{9}$/;
+      const phone = document.getElementById("phone").value.trim();
+      const age = parseInt(document.getElementById("age").value);
+      const errorMsg = document.getElementById("errorMsg");
+      errorMsg.textContent = "";
+
+      if (!phoneRegex.test(phone)) {
+        errorMsg.textContent = "Enter a valid 10-digit Indian phone number.";
+        return false;
+      }
+      if (age < 18) {
+        errorMsg.textContent = "Age must be 18 or above.";
+        return false;
+      }
+
+      const formData = {
+        name: document.getElementById("name").value,
+        age: age,
+        phone: phone,
+        email: document.getElementById("email").value,
+        address: document.getElementById("address").value,
+        gender: document.getElementById("gender").value,
+        profession: document.getElementById("profession").value,
+        timestamp: new Date().toLocaleString()
+      };
+
+      let saved = JSON.parse(localStorage.getItem("webinarForms")) || [];
+      saved.push(formData);
+      localStorage.setItem("webinarForms", JSON.stringify(saved));
+
+      alert("Registration saved locally!");
+      document.getElementById("webinarForm").reset();
+      return false;
+    }
+
+    function showData() {
+      const saved = JSON.parse(localStorage.getItem("webinarForms")) || [];
+      const container = document.getElementById("savedData");
+
+      if (saved.length === 0) {
+        container.innerHTML = "<h3>No registrations found.</h3>";
+        return;
+      }
+
+      container.innerHTML = `
+        <h3>Saved Registrations:</h3>
+        <form id="selectForm">
+          ${saved.map((d, i) => `
+            <div class="entry-box">
+              <input type="checkbox" name="selectEntry" value="${i}" />
+              <strong>#${i + 1} - ${d.name}</strong><br>
+              Age: ${d.age}, Phone: ${d.phone}<br>
+              Email: ${d.email}<br>
+              Address: ${d.address}<br>
+              Gender: ${d.gender || "N/A"}, Profession: ${d.profession || "N/A"}<br>
+              <small>Saved on: ${d.timestamp}</small>
+            </div>
+          `).join("")}
+          <button type="button" onclick="deleteSelected()" style="background:red; color:white; width:49%; border:none; padding:10px; border-radius:6px; margin-top:10px;">Delete Selected</button>
+          <button type="button" onclick="downloadSelected()" style="background:green; color:white; width:49%; float:right; border:none; padding:10px; border-radius:6px; margin-top:10px;">Download Selected</button>
+          <button type="button" onclick="clearAll()" style="background:darkred; color:white; width:100%; margin-top:10px; border:none; padding:10px; border-radius:6px;">Delete All Entries</button>
+        </form>
+      `;
+    }
+
+    function deleteSelected() {
+      const saved = JSON.parse(localStorage.getItem("webinarForms")) || [];
+      const checkboxes = document.querySelectorAll("input[name='selectEntry']:checked");
+      const indexesToDelete = Array.from(checkboxes).map(cb => parseInt(cb.value));
+      if (indexesToDelete.length === 0) {
+        alert("No entries selected to delete.");
+        return;
+      }
+
+      if (confirm(`Delete ${indexesToDelete.length} selected entries?`)) {
+        const newData = saved.filter((_, i) => !indexesToDelete.includes(i));
+        localStorage.setItem("webinarForms", JSON.stringify(newData));
+        showData();
+      }
+    }
+
+    function clearAll() {
+      if (confirm("Are you sure you want to delete ALL entries?")) {
+        localStorage.removeItem("webinarForms");
+        showData();
+      }
+    }
+
+    
+    function downloadSelected() {
+  const saved = JSON.parse(localStorage.getItem("webinarForms")) || [];
+  const checkboxes = document.querySelectorAll("input[name='selectEntry']:checked");
+  const selectedIndexes = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+  if (selectedIndexes.length === 0) {
+    alert("No entries selected to download.");
+    return;
+  }
+
+  const selectedData = selectedIndexes.map(i => saved[i]);
+
+  let csv = "Name,Age,Phone,Email,Address,Gender,Profession,Timestamp\n";
+  selectedData.forEach(d => {
+    const row = [
+      d.name,
+      d.age,
+      d.phone,
+      d.email,
+      d.address,
+      d.gender,
+      d.profession,
+      d.timestamp
+    ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(",");
+    csv += row + "\n";
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = "registation.csv";
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+  </script>
+
+</body>
+</html>

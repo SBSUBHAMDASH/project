@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Calculator</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="icon" href="icon.png" />
+</head>
+<body>
+
+
+
+<div class="container">
+  <!-- Calculator Panel -->
+  <div id="calculator" class="panel">
+    <div id="display" class="display">0</div>
+    <div class="grid">
+      <button class="btn mem">MC</button>
+      <button class="btn mem">MR</button>
+      <button class="btn mem">M+</button>
+      <button class="btn sci">π</button>
+      <button class="btn sci">e</button>
+
+      <button class="btn">(</button>
+      <button class="btn">)</button>
+      <button class="btn sci">√</button>
+      <button class="btn sci">x²</button>
+      <button class="btn sci">log</button>
+
+      <button class="btn">7</button>
+      <button class="btn">8</button>
+      <button class="btn">9</button>
+      <button class="btn operator">/</button>
+      <button class="btn sci">C</button>
+
+      <button class="btn">4</button>
+      <button class="btn">5</button>
+      <button class="btn">6</button>
+      <button class="btn operator">*</button>
+      <button class="btn sci">⌫</button>
+
+      <button class="btn">1</button>
+      <button class="btn">2</button>
+      <button class="btn">3</button>
+      <button class="btn operator">-</button>
+      <button class="btn sci">sin</button>
+
+      <button class="btn">0</button>
+      <button class="btn">.</button>
+      <button class="btn equal">=</button>
+      <button class="btn operator">+</button>
+      <button class="btn sci">cos</button>
+    </div>
+  </div>
+
+  <!-- Converter Panel -->
+  <div id="converter" class="panel hidden">
+    <h2>Unit Converter</h2>
+    <select id="conversionType">
+      <option value="length">Length</option>
+      <option value="temp">Temperature</option>
+    </select>
+
+    <input type="number" id="inputValue" placeholder="Enter value">
+    <select id="fromUnit"></select>
+    <select id="toUnit"></select>
+    <button id="convertBtn" class="btn" >Convert</button>
+    <div class="display" id="conversionResult" style="margin-top: 30px;">0</div>
+  </div>
+</div>
+<div class="toggle-bar">
+  <button id="toggleMode"> 🔁 Switch View</button>
+  <button id="themeToggle">🌙</button>
+  <button id="muteToggle">🔊</button>
+</div>
+<div class="Main" >
+<button onclick="location.href='../index.html'"><h1>🚪Main</h1></button>
+</div>
+<audio id="clickSound" src="click.ogg" preload="auto"></audio>
+<audio id="errorSound" src="error.ogg" preload="auto"></audio>
+
+<script src="script.js"></script>
+<script src="converter.js"></script>
+</body>
+</html>

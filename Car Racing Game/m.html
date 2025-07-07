@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Car Race</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b0c10" />
+  <style>
+    body {
+      margin: 0;
+      background: #0b0c10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    #game {
+      position: relative;
+      width: 400px;
+      height: 985px;
+      background: linear-gradient(to bottom, #1f2833, #0b0c10);
+      border: 4px solid #45a29e;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 0 25px #66fcf1;
+      margin-top: 20px;
+    }
+
+    .car {
+      position: absolute;
+      width: 50px;
+      height: 90px;
+      filter: drop-shadow(0 0 6px #66fcf1);
+    }
+
+    #car1 { left: 100px; }
+    #car2 { left: 250px; }
+
+    #car1 img, #car2 img {
+      width: 100%;
+      height: 100%;
+      border-radius: 5px;
+    }
+
+    .finish {
+      position: absolute;
+      width: 100%;
+      height: 170px;
+      top: 20px;
+      background: url('finish-line.png') center/contain no-repeat;
+      background-size: cover;
+      border-bottom: 3px solid #ff2e63;
+      box-shadow: 0 0 10px #ff2e63;
+    }
+
+    #result {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #ffffff;
+      display: none;
+      padding: 15px 25px;
+      background: rgba(15, 15, 20, 0.85);
+      border-radius: 10px;
+      border: 2px solid #66fcf1;
+      box-shadow: 0 0 20px #66fcf1;
+    }
+
+    .buttons {
+      margin: 20px 0;
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn, .touch-btn {
+      padding: 12px 20px;
+      font-size: xx-large;
+      background: #45a29e;
+      color: #0b0c10;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #66fcf1;
+      transition: 0.3s;
+      
+    }
+
+    .btn:hover, .touch-btn:hover {
+      background: #66fcf1;
+      color: #1f2833;
+      box-shadow: 0 0 20px #66fcf1;
+    }
+
+    .touch-controls {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game">
+    <div class="finish"></div>
+    <div id="car1" class="car"><img src="player-car.png" alt="Player Car" /></div>
+    <div id="car2" class="car"><img src="computer-car.png" alt="Computer Car" /></div>
+    <div id="result"></div>
+  </div>
+
+  <!-- 🔘 Control Buttons -->
+  <div class="touch-controls">
+    <button class="touch-btn" id="upBtn">⬆️ Move Up</button>
+  </div>
+
+  <div class="buttons">
+    <button class="btn" id="resetBtn">Reset Game</button>
+    <button class="btn" onclick="location.href='../index.html'" >Main</button>
+  </div>
+
+  <script>
+    const car1 = document.getElementById('car1');
+    const car2 = document.getElementById('car2');
+    const result = document.getElementById('result');
+
+    let car1Top, car2Top, gameOver;
+    const finishLine = 20;
+
+    function init() {
+      car1Top = 900;
+      car2Top = 900;
+      gameOver = false;
+      result.style.display = 'none';
+      updateCarPositions();
+      moveComputerCar();
+    }
+
+    function updateCarPositions() {
+      car1.style.top = car1Top + 'px';
+      car2.style.top = car2Top + 'px';
+    }
+
+    function moveComputerCar() {
+      if (gameOver) return;
+      car2Top -= Math.random() * 2 + 1;
+      updateCarPositions();
+      checkWinner();
+      requestAnimationFrame(moveComputerCar);
+    }
+
+    function checkWinner() {
+      if (car1Top <= finishLine) {
+        result.textContent = "🚗 You Win!";
+        result.style.display = 'block';
+        gameOver = true;
+      } else if (car2Top <= finishLine) {
+        result.textContent = "💻 Computer Wins!";
+        result.style.display = 'block';
+        gameOver = true;
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' && !gameOver) {
+        car1Top -= 2.5;
+        updateCarPositions();
+        checkWinner();
+      }
+    });
+
+    document.getElementById('upBtn').addEventListener('click', () => {
+      if (!gameOver) {
+        car1Top -= 2.5;
+        updateCarPositions();
+        checkWinner();
+      }
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', init);
+    init();
+
+    // 📦 Register Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log("SW Registered", reg))
+        .catch(err => console.error("SW Error", err));
+    }
+  </script>
+</body>
+</html>

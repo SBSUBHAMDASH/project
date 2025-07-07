@@ -1,0 +1,23 @@
+@media (max-width:1px) {
+th,td{
+        text-align: center;
+    }
+div{
+padding: 0 200px;
+margin-bottom: 5%;
+}
+#d1{
+    
+background-color: #fff;
+float: left;
+resize: both;
+overflow: auto;
+}
+#d2{
+    background-color: black;
+    float: right;
+    resize: both;
+    overflow: auto;
+    }
+  
+}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Colorful Countdown Timer</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container" id="main-screen">
+    <div class="timer-box">
+      <h1>Colorful Countdown Timer</h1>
+      <div class="input-group">
+        <input type="number" id="days" placeholder="DD" min="0">
+        <input type="number" id="hours" placeholder="HH" min="0" max="23">
+        <input type="number" id="minutes" placeholder="MM" min="0" max="59">
+        <input type="number" id="seconds" placeholder="SS" min="0" max="59">
+      </div>
+      <div class="controls">
+        <button class="start" onclick="startTimer()"><h1>Start</h1></button>
+      </div>
+      <audio id="alert-sound" src="alert.mp3" preload="auto"></audio>
+      <audio id="transition-sound" src="transition.mp3" preload="auto"></audio>
+    </div>
+  </div>
+
+  <div class="transition-screen" id="transition-screen">
+    <div class="countdown-number" id="countdown-number">00d 00h 00m 00s</div>
+    <div class="controls">
+      <button class="pause" onclick="pauseTimer()"><h1>Pause</h1></button>
+      <button class="reset" onclick="resetTimer()"><h1>Reset</h1></button>
+    </div>
+  </div>
+
+  <div class="end-screen" id="end-screen">
+    <h2>Your time is off, but you are not.</h2>
+    <button class="restart" onclick="goToStart()"><h1>🔁 Home</h1></button>
+    <button class="blank" onclick="location.href='../index.html'"><h1>🚪Main</h1></button>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
+</body>
+</html>

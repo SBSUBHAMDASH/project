@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Emotion CAPTCHA</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="captcha-container">
+    <div class="captcha-card">
+      <h2>React like a human 😊</h2>
+      <div id="image-story">
+        <img id="story-image" src="" alt="Emotion Story" />
+        <p id="caption" class="caption"></p>
+      </div>
+      <div class="emoji-options" id="emoji-buttons"></div>
+      <p id="result"></p>
+      <button id="next-button" onclick="nextStory()" style="display: none;">Next</button>
+      <div id="try-again-container"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker Registered'));
+    }
+  </script>
+</body>
+</html>
