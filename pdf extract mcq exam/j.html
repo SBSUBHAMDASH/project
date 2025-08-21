@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AI MCQ Exam — Sci-Fi Mode</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root{
+  --bg1:#0f0c29; --bg2:#302b63;
+  --neon-blue: #00e5ff;
+  --neon-purple: #9d00ff;
+  --neon-pink: #ff00ff;
+  --glass: rgba(255,255,255,0.04);
+  --muted: #bfc8ff;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:'Orbitron',system-ui,Arial; background: radial-gradient(circle at top, var(--bg1), var(--bg2));
+  color: var(--muted); -webkit-font-smoothing:antialiased;
+}
+
+header{
+  padding:18px 16px; text-align:center; color:var(--neon-blue);
+  text-shadow:0 0 12px rgba(0,229,255,0.25);
+}
+header h1{ margin:0; font-size:1.6rem; }
+.sub { font-size:0.9rem; color:#9aa3d9; margin-top:6px; }
+
+.container{ width:95%; max-width:1100px; margin:18px auto 60px; }
+.controls{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:12px; }
+.btn{
+  appearance:none; -webkit-appearance:none;
+  border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700;
+  color:#04111a; background:linear-gradient(90deg,var(--neon-blue),var(--neon-purple));
+  box-shadow:0 6px 22px rgba(0,0,0,0.5), 0 0 12px rgba(0,229,255,0.12);
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.btn.ghost{ background: transparent; color:var(--neon-blue); border:1px solid rgba(255,255,255,0.04); box-shadow:none; }
+.btn:active{ transform:translateY(1px); }
+.btn:hover{ transform:translateY(-3px); box-shadow:0 10px 40px rgba(0,0,0,0.6), 0 0 22px rgba(157,0,255,0.12); }
+
+.legend{
+  display:flex; gap:10px; justify-content:center; margin:12px auto 18px; max-width:900px;
+  padding:8px 12px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5), inset 0 0 12px rgba(0,229,255,0.03);
+}
+.legend span{
+  padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.95rem;
+  text-shadow:0 0 6px rgba(0,0,0,0.6);
+}
+.legend .ok{ background: linear-gradient(90deg,#0aff7a,#00ff6a); color:#042507; box-shadow:0 0 12px rgba(0,255,170,0.12); }
+.legend .bad{ background: linear-gradient(90deg,#ff7a7a,#ff3a3a); color:#200; }
+.legend .skip{ background: linear-gradient(90deg,#fff57a,#ffeb3b); color:#2b2100; }
+
+#exam { max-width:1100px; margin:0 auto 20px; }
+.question-card{
+  background:var(--glass); border:1px solid rgba(0,0,0,0.25);
+  border-left: 6px solid rgba(0,229,255,0.12);
+  border-radius:12px; padding:14px; margin:12px 6px; position:relative;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+}
+.question-q{ font-weight:700; color: #eaf6ff; margin-bottom:8px; line-height:1.3; }
+.tts-btn{ position:absolute; right:12px; top:12px; background:none; border:0; color:var(--neon-pink); cursor:pointer; font-size:18px; text-shadow:0 0 8px rgba(255,0,255,0.12); }
+
+.options{ margin-top:6px; display:flex; flex-direction:column; gap:8px; }
+.options label{ display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:8px; transition:all .18s ease; }
+.options label:hover{ box-shadow:0 6px 30px rgba(0,0,0,0.5), 0 0 14px rgba(0,229,255,0.06); }
+.options input[type="radio"]{ display:none; }
+.options span{ display:inline-block; padding:6px 10px; border-radius:6px; color:var(--muted); }
+.options input[type="radio"]:checked + span{
+  background: linear-gradient(90deg, rgba(0,229,255,0.12), rgba(157,0,255,0.08));
+  box-shadow: 0 0 18px rgba(0,229,255,0.12), 0 0 30px rgba(157,0,255,0.08);
+  color: #e9fbff;
+}
+.span-correct{background:#0aff7a;color:#042507;}
+.span-wrong{background:#ff7a7a;color:#200;}
+.span-unanswered{background:#fff57a;color:#2b2100;}
+
+#scoreBox{
+  display:none; margin:14px auto 28px; padding:12px 18px; border-radius:12px;
+  background: linear-gradient(90deg, rgba(0,229,255,0.08), rgba(157,0,255,0.06));
+  color: #cdefff; font-weight:800; box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  width:fit-content;
+}
+
+.pager{ display:flex; gap:8px; justify-content:center; margin:8px 0 18px; flex-wrap:wrap; }
+.page-info{ text-align:center; margin-bottom:8px; font-weight:700; color:var(--neon-purple); }
+
+@media (max-width:720px){
+  .question-card{ padding:12px; }
+  .tts-btn{ top:8px; right:8px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>AI pdf extract MCQ Exam</h1>
+  <div class="sub">Upload a only english language PDF book</div>
+</header>
+
+<div class="container">
+  <div class="controls">
+    <input id="pdfInput" type="file" accept="application/pdf" />
+    <button class="btn" id="btnGenerate">Generate</button>
+    <button class="btn ghost" id="btnReshuffle">Reshuffle</button>
+    <button class="btn" id="btnSubmit">Submit</button>
+    <button class="btn ghost" id="btnReview">Review</button>
+    <button class="btn ghost" id="btnDownload">Download PDF</button>
+    <button class="btn ghost" id="btnNew">New Exam</button>
+    <button class="btn ghost" id="btnPrev">← Previous</button>
+    <button class="btn ghost" id="btnNext">Next →</button>
+  </div>
+
+  <div class="legend">
+    <span class="ok">✅ Correct</span>
+    <span class="bad">❌ Wrong</span>
+    <span class="skip">⚠ Unanswered</span>
+  </div>
+
+  <div id="scoreBox">Your Score: 0</div>
+  <div class="page-info" id="pageInfo"></div>
+  <div id="exam"></div>
+  <div class="pager" id="pager"></div>
+</div>
+
+<script>
+const QUESTIONS_PER_PAGE = 50;
+const MAX_QUESTIONS = 500;
+const PDF_PAGE_CHUNK = 30;
+
+let pdfFile=null, extractedText='', questions=[], userAnswers={}, currentPage=0;
+let reviewMode=false;
+
+const pdfInput = document.getElementById('pdfInput');
+const btnGenerate=document.getElementById('btnGenerate');
+const btnReshuffle=document.getElementById('btnReshuffle');
+const btnSubmit=document.getElementById('btnSubmit');
+const btnReview=document.getElementById('btnReview');
+const btnDownload=document.getElementById('btnDownload');
+const btnNew=document.getElementById('btnNew');
+const btnPrev=document.getElementById('btnPrev');
+const btnNext=document.getElementById('btnNext');
+const examDiv=document.getElementById('exam');
+const scoreBox=document.getElementById('scoreBox');
+const pageInfo=document.getElementById('pageInfo');
+
+function slug(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr; }
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeForJS(s){ return String(s||'').replace(/'/g,"\\'").replace(/\n/g,' '); }
+
+pdfInput.addEventListener('change', e=>{ if(e.target.files[0]) pdfFile=e.target.files[0]; });
+
+async function extractTextFromPDF(file,maxPages=2000,chunk=PDF_PAGE_CHUNK){
+  const array=await file.arrayBuffer();
+  const loadingTask=pdfjsLib.getDocument({data:array});
+  const pdf=await loadingTask.promise;
+  const toRead=Math.min(maxPages,pdf.numPages);
+  let fullText='';
+  for(let start=1; start<=toRead; start+=chunk){
+    const end=Math.min(start+chunk-1,toRead);
+    for(let p=start;p<=end;p++){
+      const page=await pdf.getPage(p);
+      const content=await page.getTextContent();
+      fullText+=' '+content.items.map(it=>it.str).join(' ');
+    }
+    await new Promise(r=>setTimeout(r,20));
+  }
+  return fullText;
+}
+
+function buildMCQsFromText(text,total=MAX_QUESTIONS){
+  const sentences=text.replace(/\s+/g,' ').split(/(?<=[.?!])\s+/).filter(s=>s.length>30);
+  const pool=sentences.slice(0,1200);
+  const out=[]; let qid=0;
+  for(const s of pool){
+    if(out.length>=total) break;
+    const cleaned=s.replace(/[\r\n]+/g,' ').trim();
+    const words=cleaned.split(/\s+/).map(w=>w.replace(/[^A-Za-z0-9\-']/g,'')).filter(w=>w.length>3);
+    if(words.length<5) continue;
+    const mid=Math.floor(words.length/2);
+    let correct=[words[mid],words[Math.max(1,mid-1)],words[Math.min(words.length-1,mid+1)]].find(w=>w&&w.length>=4)||words[mid];
+    correct=correct.replace(/[^A-Za-z0-9\-']/g,'').trim();
+    if(!correct) continue;
+    const distractors=[];
+    let attempts=0;
+    while(distractors.length<3 && attempts<200){
+      attempts++;
+      const cand=words[Math.floor(Math.random()*words.length)].replace(/[^A-Za-z0-9\-']/g,'').trim();
+      if(!cand) continue; if(slug(cand)===slug(correct)) continue; if(distractors.map(slug).includes(slug(cand))) continue;
+      distractors.push(cand);
+    }
+    if(distractors.length<3) continue;
+    const options=shuffle([correct,...distractors]).slice(0,4);
+    qid++; out.push({id:qid,q:cleaned,options,answer:correct});
+  }
+  return out;
+}
+
+window.__setAnswer=function(qid,opt){ userAnswers[qid]=opt; if(reviewMode) renderQuestions(); };
+
+function renderQuestions(){
+  examDiv.innerHTML='';
+  if(!questions.length){ examDiv.innerHTML='<div style="opacity:.7;padding:18px">No questions yet.</div>'; pageInfo.textContent=''; return; }
+  const start=currentPage*QUESTIONS_PER_PAGE;
+  const end=Math.min(start+QUESTIONS_PER_PAGE,questions.length);
+  for(let i=start;i<end;i++){
+    const q=questions[i];
+    const optsHtml=q.options.map(opt=>{
+      let cls='';
+      if(reviewMode){
+        if(slug(opt)===slug(q.answer)) cls='span-correct';
+        else if(userAnswers[q.id] && slug(opt)===slug(userAnswers[q.id])) cls='span-wrong';
+        else cls='span-unanswered';
+      }
+      return `<label><input type="radio" name="q${q.id}" value="${escapeHtml(opt)}" onchange="window.__setAnswer(${q.id},'${escapeForJS(opt)}')"><span class="${cls}">${escapeHtml(opt)}</span></label>`;
+    }).join('');
+    const speakText=escapeForJS(`${q.q}. Options: ${q.options.join(', ')}.`);
+    const card=document.createElement('div'); card.className='question-card';
+    card.innerHTML=`<div class="question-q">${escapeHtml(q.q)}</div><button class="tts-btn" type="button" onclick="speak('${speakText}')">🔊</button><div class="options">${optsHtml}</div>`;
+    examDiv.appendChild(card);
+  }
+  updatePagerButtons();
+  pageInfo.textContent=`Page ${currentPage+1} of ${Math.ceil(questions.length/QUESTIONS_PER_PAGE)}`;
+}
+
+function updatePagerButtons(){
+  const totalPages=Math.ceil(questions.length/QUESTIONS_PER_PAGE);
+  btnPrev.disabled=currentPage===0;
+  btnNext.disabled=currentPage>=totalPages-1;
+}
+
+function speak(text){ if(!text) return; const u=new SpeechSynthesisUtterance(text); u.rate=1; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+
+btnGenerate.addEventListener('click', async ()=>{
+  if(!pdfFile){ alert('Select a PDF first'); return; }
+  btnGenerate.disabled=true; btnGenerate.textContent='Generating...';
+  extractedText=await extractTextFromPDF(pdfFile);
+  questions=buildMCQsFromText(extractedText,MAX_QUESTIONS);
+  userAnswers={}; currentPage=0; scoreBox.style.display='none'; reviewMode=false;
+  renderQuestions();
+  btnGenerate.disabled=false; btnGenerate.textContent='Generate';
+});
+
+btnReshuffle.addEventListener('click', ()=>{ if(!questions.length) return; questions=shuffle(questions); currentPage=0; renderQuestions(); });
+
+btnSubmit.addEventListener('click', ()=>{
+  if(!questions.length) return;
+  let score=0; for(const q of questions) if(slug(userAnswers[q.id]||'')===slug(q.answer)) score++;
+  scoreBox.textContent=`Your Score: ${score} / ${questions.length}`; scoreBox.style.display='block';
+});
+
+btnReview.addEventListener('click', ()=>{
+  if(!questions.length) return;
+  reviewMode=!reviewMode;
+  btnReview.textContent = reviewMode ? 'Cancel Review' : 'Review';
+  renderQuestions();
+});
+
+btnDownload.addEventListener('click', ()=>{
+  if(!questions.length) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'a4'});
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = 40;
+  doc.setFont('Courier', 'normal'); doc.setFontSize(12);
+  doc.text('AI MCQ Exam Questions', pageWidth/2, y, {align:'center'}); y+=30;
+
+  questions.forEach((q,i)=>{
+    const questionText = `${i+1}. ${q.q}`;
+    const optionsText = q.options.map((opt,j)=>`   ${String.fromCharCode(65+j)}. ${opt}`).join('\n');
+    const answerText = `Answer: ${q.answer}`;
+    const lines = doc.splitTextToSize(questionText+'\n'+optionsText+'\n'+answerText, pageWidth-40);
+    if(y + lines.length*14 > doc.internal.pageSize.getHeight()-40){ doc.addPage(); y=40; }
+    doc.text(lines, 20, y); y += lines.length*14 + 10;
+  });
+  doc.save('AI_MCQ_Exam.pdf');
+});
+
+btnNew.addEventListener('click', ()=>{
+  extractedText=''; questions=[]; userAnswers={}; currentPage=0; examDiv.innerHTML=''; scoreBox.style.display='none'; pageInfo.textContent=''; reviewMode=false; btnReview.textContent='Review';
+});
+
+btnPrev.addEventListener('click', ()=>{ if(currentPage>0){ currentPage--; renderQuestions(); } });
+btnNext.addEventListener('click', ()=>{ if(currentPage<Math.ceil(questions.length/QUESTIONS_PER_PAGE)-1){ currentPage++; renderQuestions(); } });
+
+</script>
+</body>
+</html>
