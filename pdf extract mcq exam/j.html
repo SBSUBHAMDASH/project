@@ -98,6 +98,20 @@ header h1{ margin:0; font-size:1.6rem; }
 </style>
 </head>
 <body>
+
+<div id="loadingOverlay" style="
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(circle, rgba(0,0,20,0.9), rgba(0,0,0,1));
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  font-family: 'Orbitron', sans-serif; color: #00ffff; font-size: 2em;
+  z-index: 9999; transition: opacity 0.4s ease;
+">
+  <div id="loadingText">Loading... 0%</div>
+  <div style="width: 60%; height: 10px; background: rgba(255,255,255,0.2); margin-top: 15px; border-radius: 10px; overflow: hidden;">
+    <div id="loadingBar" style="width: 0%; height: 100%; background: #00ffff; transition: width 0.2s;"></div>
+  </div>
+</div>
+
 <header>
   <h1>AI pdf extract MCQ Exam</h1>
   <div class="sub">Upload a only english language PDF book</div>
@@ -157,23 +171,36 @@ function escapeForJS(s){ return String(s||'').replace(/'/g,"\\'").replace(/\n/g,
 
 pdfInput.addEventListener('change', e=>{ if(e.target.files[0]) pdfFile=e.target.files[0]; });
 
-async function extractTextFromPDF(file,maxPages=2000,chunk=PDF_PAGE_CHUNK){
-  const array=await file.arrayBuffer();
-  const loadingTask=pdfjsLib.getDocument({data:array});
-  const pdf=await loadingTask.promise;
-  const toRead=Math.min(maxPages,pdf.numPages);
-  let fullText='';
-  for(let start=1; start<=toRead; start+=chunk){
-    const end=Math.min(start+chunk-1,toRead);
-    for(let p=start;p<=end;p++){
-      const page=await pdf.getPage(p);
-      const content=await page.getTextContent();
-      fullText+=' '+content.items.map(it=>it.str).join(' ');
-    }
-    await new Promise(r=>setTimeout(r,20));
+async function extractTextFromPDF(file, maxPages = 2000, chunk = PDF_PAGE_CHUNK) {
+  const array = await file.arrayBuffer();
+  const loadingTask = pdfjsLib.getDocument({ data: array });
+  const pdf = await loadingTask.promise;
+
+  const loadingOverlay = document.getElementById("loadingOverlay");
+  const loadingText = document.getElementById("loadingText");
+  const loadingBar = document.getElementById("loadingBar");
+  loadingOverlay.style.display = "flex";
+  loadingOverlay.style.opacity = "1";
+
+  const totalPages = Math.min(maxPages, pdf.numPages);
+  let fullText = "";
+
+  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
+    fullText += " " + content.items.map(it => it.str).join(" ");
+    const percent = Math.round((pageNum / totalPages) * 100);
+    loadingText.textContent = `Loading... ${percent}%`;
+    loadingBar.style.width = `${percent}%`;
   }
+
+
+  loadingOverlay.style.opacity = "0";
+  setTimeout(() => (loadingOverlay.style.display = "none"), 500);
+
   return fullText;
 }
+
 
 function buildMCQsFromText(text,total=MAX_QUESTIONS){
   const sentences=text.replace(/\s+/g,' ').split(/(?<=[.?!])\s+/).filter(s=>s.length>30);
@@ -294,5 +321,6 @@ btnNext.addEventListener('click', ()=>{ if(currentPage<Math.ceil(questions.lengt
 </script>
 </body>
 </html>
+
 
 
