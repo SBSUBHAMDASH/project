@@ -131,7 +131,7 @@ header h1{ margin:0; font-size:1.6rem; }
 
 <script>
 const QUESTIONS_PER_PAGE = 50;
-const MAX_QUESTIONS = 500;
+const MAX_QUESTIONS = 250;
 const PDF_PAGE_CHUNK = 30;
 
 let pdfFile=null, extractedText='', questions=[], userAnswers={}, currentPage=0;
@@ -177,7 +177,7 @@ async function extractTextFromPDF(file,maxPages=2000,chunk=PDF_PAGE_CHUNK){
 
 function buildMCQsFromText(text,total=MAX_QUESTIONS){
   const sentences=text.replace(/\s+/g,' ').split(/(?<=[.?!])\s+/).filter(s=>s.length>30);
-  const pool=sentences.slice(0,1200);
+  const pool=sentences.slice(0,2500);
   const out=[]; let qid=0;
   for(const s of pool){
     if(out.length>=total) break;
@@ -207,7 +207,8 @@ window.__setAnswer=function(qid,opt){ userAnswers[qid]=opt; if(reviewMode) rende
 
 function renderQuestions(){
   examDiv.innerHTML='';
-  if(!questions.length){ examDiv.innerHTML='<div style="opacity:.7;padding:18px">No questions yet.</div>'; pageInfo.textContent=''; return; }
+  if(!questions.length){ examDiv.innerHTML='<div style="opacity:.7;padding:18px">No questions yet.</div>'; pageInfo.textContent = `Page ${currentPage+1} of ${Math.ceil(questions.length/QUESTIONS_PER_PAGE)}`;
+ }
   const start=currentPage*QUESTIONS_PER_PAGE;
   const end=Math.min(start+QUESTIONS_PER_PAGE,questions.length);
   for(let i=start;i<end;i++){
@@ -293,4 +294,5 @@ btnNext.addEventListener('click', ()=>{ if(currentPage<Math.ceil(questions.lengt
 </script>
 </body>
 </html>
+
 
