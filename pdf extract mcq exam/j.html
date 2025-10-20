@@ -95,6 +95,15 @@ header h1{ margin:0; font-size:1.6rem; }
   .question-card{ padding:12px; }
   .tts-btn{ top:8px; right:8px; }
 }
+#loadingOverlay{
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,20,0.85); display:none; flex-direction:column;
+  justify-content:center; align-items:center; color:#00e5ff;
+  z-index:9999; transition:opacity 0.5s ease;
+}
+#loadingText{font-size:1.4rem; margin-bottom:20px;}
+.loadingBarContainer{width:80%; max-width:400px; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden;}
+#loadingBar{height:100%; width:0%; background:linear-gradient(90deg,var(--neon-blue),var(--neon-purple)); transition:width 0.2s ease;}
 </style>
 </head>
 <body>
@@ -128,10 +137,14 @@ header h1{ margin:0; font-size:1.6rem; }
   <div id="exam"></div>
   <div class="pager" id="pager"></div>
 </div>
+<div id="loadingOverlay">
+  <div id="loadingText">Loading... 0%</div>
+  <div class="loadingBarContainer"><div id="loadingBar"></div></div>
+</div>
 
 <script>
 const QUESTIONS_PER_PAGE = 50;
-const MAX_QUESTIONS = 250;
+const MAX_QUESTIONS = 500;
 const PDF_PAGE_CHUNK = 30;
 
 let pdfFile=null, extractedText='', questions=[], userAnswers={}, currentPage=0;
@@ -157,71 +170,98 @@ function escapeForJS(s){ return String(s||'').replace(/'/g,"\\'").replace(/\n/g,
 
 pdfInput.addEventListener('change', e=>{ if(e.target.files[0]) pdfFile=e.target.files[0]; });
 
-async function extractTextFromPDF(file, maxPages = 2000, chunk = PDF_PAGE_CHUNK) {
-  const array = await file.arrayBuffer();
-  const loadingTask = pdfjsLib.getDocument({ data: array });
-  const pdf = await loadingTask.promise;
+async function extractTextFromPDF(file, maxPages=2000, chunk=PDF_PAGE_CHUNK){
+  const array=await file.arrayBuffer();
+  const loadingTask=pdfjsLib.getDocument({data:array});
+  const pdf=await loadingTask.promise;
 
-  const loadingOverlay = document.getElementById("loadingOverlay");
-  const loadingText = document.getElementById("loadingText");
-  const loadingBar = document.getElementById("loadingBar");
-  loadingOverlay.style.display = "flex";
-  loadingOverlay.style.opacity = "1";
+  const loadingOverlay=document.getElementById("loadingOverlay");
+  const loadingText=document.getElementById("loadingText");
+  const loadingBar=document.getElementById("loadingBar");
+  loadingOverlay.style.display="flex";
+  loadingOverlay.style.opacity="1";
 
-  const totalPages = Math.min(maxPages, pdf.numPages);
-  let fullText = "";
+  const totalPages=Math.min(maxPages,pdf.numPages);
+  let fullText="";
 
-  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-    const page = await pdf.getPage(pageNum);
-    const content = await page.getTextContent();
-    fullText += " " + content.items.map(it => it.str).join(" ");
-    const percent = Math.round((pageNum / totalPages) * 100);
-    loadingText.textContent = `Loading... ${percent}%`;
-    loadingBar.style.width = `${percent}%`;
+  for(let pageNum=1; pageNum<=totalPages; pageNum++){
+    const page=await pdf.getPage(pageNum);
+    const content=await page.getTextContent();
+    fullText+=" "+content.items.map(it=>it.str).join(" ");
+    const percent=Math.round((pageNum/totalPages)*100);
+    loadingText.textContent=`Processing PDF... ${percent}%`;
+    loadingBar.style.width=`${percent}%`;
   }
 
-
-  loadingOverlay.style.opacity = "0";
-  setTimeout(() => (loadingOverlay.style.display = "none"), 500);
-
+  loadingOverlay.style.opacity="0";
+  setTimeout(()=>loadingOverlay.style.display="none",500);
   return fullText;
 }
 
+function buildMCQsFromText(text, total=MAX_QUESTIONS){
+  const interrogatives = ['who','what','which','where','when','why','how','whose'];
+  const relatives = ['who','whom','whose','which','that'];
 
-function buildMCQsFromText(text,total=MAX_QUESTIONS){
-  const sentences=text.replace(/\s+/g,' ').split(/(?<=[.?!])\s+/).filter(s=>s.length>30);
-  const pool=sentences.slice(0,2500);
-  const out=[]; let qid=0;
-  for(const s of pool){
+  const sentences = text.replace(/\s+/g,' ').split(/(?<=[.?!])\s+/).filter(s=>s.length>30);
+  const out = []; let qid=0;
+
+  for(const s of sentences){
     if(out.length>=total) break;
-    const cleaned=s.replace(/[\r\n]+/g,' ').trim();
-    const words=cleaned.split(/\s+/).map(w=>w.replace(/[^A-Za-z0-9\-']/g,'')).filter(w=>w.length>3);
-    if(words.length<5) continue;
-    const mid=Math.floor(words.length/2);
-    let correct=[words[mid],words[Math.max(1,mid-1)],words[Math.min(words.length-1,mid+1)]].find(w=>w&&w.length>=4)||words[mid];
-    correct=correct.replace(/[^A-Za-z0-9\-']/g,'').trim();
-    if(!correct) continue;
-    const distractors=[];
-    let attempts=0;
-    while(distractors.length<3 && attempts<200){
-      attempts++;
-      const cand=words[Math.floor(Math.random()*words.length)].replace(/[^A-Za-z0-9\-']/g,'').trim();
-      if(!cand) continue; if(slug(cand)===slug(correct)) continue; if(distractors.map(slug).includes(slug(cand))) continue;
-      distractors.push(cand);
+    const lower = s.toLowerCase();
+
+    let questionText = s.trim();
+    let options = [];
+    let answer = "";
+
+
+    const isQuestion = interrogatives.some(w => lower.includes(w+' ')) || relatives.some(w => lower.includes(w+' '));
+
+    const words = s.split(/\s+/).map(w=>w.replace(/[^A-Za-z0-9\-']/g,'')).filter(w=>w.length>3);
+
+    if(words.length < 4) continue;
+
+    if(isQuestion){
+      answer = words[Math.floor(Math.random()*words.length)];
+      const distractors = [];
+      let attempts=0;
+      while(distractors.length<3 && attempts<100){
+        attempts++;
+        const cand = words[Math.floor(Math.random()*words.length)];
+        if(slug(cand)===slug(answer)) continue;
+        if(distractors.map(slug).includes(slug(cand))) continue;
+        distractors.push(cand);
+      }
+      options = shuffle([answer,...distractors]).slice(0,4);
+    } else {
+      const mid = Math.floor(words.length/2);
+      answer = words[mid];
+      questionText = words.map((w,i)=>i===mid?'___':w).join(' ');
+      
+      const distractors = [];
+      let attempts=0;
+      while(distractors.length<3 && attempts<100){
+        attempts++;
+        const cand = words[Math.floor(Math.random()*words.length)];
+        if(slug(cand)===slug(answer)) continue;
+        if(distractors.map(slug).includes(slug(cand))) continue;
+        distractors.push(cand);
+      }
+      options = shuffle([answer,...distractors]).slice(0,4);
     }
-    if(distractors.length<3) continue;
-    const options=shuffle([correct,...distractors]).slice(0,4);
-    qid++; out.push({id:qid,q:cleaned,options,answer:correct});
+
+    qid++;
+    out.push({id:qid,q:questionText,options,answer});
   }
+
   return out;
 }
+
 
 window.__setAnswer=function(qid,opt){ userAnswers[qid]=opt; if(reviewMode) renderQuestions(); };
 
 function renderQuestions(){
   examDiv.innerHTML='';
-  if(!questions.length){ examDiv.innerHTML='<div style="opacity:.7;padding:18px">No questions yet.</div>'; pageInfo.textContent = `Page ${currentPage+1} of ${Math.ceil(questions.length/QUESTIONS_PER_PAGE)}`;
- }
+  if(!questions.length){ examDiv.innerHTML='<div style="opacity:.7;padding:18px">No questions yet.</div>'; pageInfo.textContent=''; return; }
   const start=currentPage*QUESTIONS_PER_PAGE;
   const end=Math.min(start+QUESTIONS_PER_PAGE,questions.length);
   for(let i=start;i<end;i++){
@@ -298,7 +338,9 @@ btnDownload.addEventListener('click', ()=>{
 });
 
 btnNew.addEventListener('click', ()=>{
-  extractedText=''; questions=[]; userAnswers={}; currentPage=0; examDiv.innerHTML=''; scoreBox.style.display='none'; pageInfo.textContent=''; reviewMode=false; btnReview.textContent='Review';
+  extractedText=''; questions=[]; userAnswers={}; currentPage=0; examDiv.innerHTML=''; scoreBox.style.display='none'; pageInfo.textContent=''; reviewMode=false; btnReview.textContent='Review'; renderQuestions();
+ const fileInput = document.querySelector('input[type="file"]');
+  if (fileInput) fileInput.value = '';
 });
 
 btnPrev.addEventListener('click', ()=>{ if(currentPage>0){ currentPage--; renderQuestions(); } });
@@ -307,7 +349,3 @@ btnNext.addEventListener('click', ()=>{ if(currentPage<Math.ceil(questions.lengt
 </script>
 </body>
 </html>
-
-
-
-
