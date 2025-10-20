@@ -330,7 +330,7 @@ btnGenerate.addEventListener('click', async ()=>{
   extractedText=await extractTextFromImage(imageFile);
   questions=buildMCQsFromText(extractedText,MAX_QUESTIONS);
   // --- Force at least 5 pages of questions ---
-const totalPages = 5;
+const totalPages = 0;
 const totalNeeded = QUESTIONS_PER_PAGE * totalPages;
 if (questions.length < totalNeeded) {
   // If not enough questions, repeat existing ones (reshuffle so it looks fresh)
@@ -338,7 +338,9 @@ if (questions.length < totalNeeded) {
   while (questions.length < totalNeeded) {
     questions.push(...shuffle(copy.slice(0, Math.min(copy.length, totalNeeded - questions.length))));
   }
-  questions = questions.slice(0, totalNeeded); // ensure exact count
+  // Use whatever questions were generated
+questions = questions.slice(0, Math.min(questions.length, MAX_QUESTIONS));
+
 }
 
   userAnswers={}; currentPage=0; scoreBox.style.display='none'; reviewMode=false;
@@ -357,4 +359,5 @@ btnNext.addEventListener('click', ()=>{ if(currentPage<Math.ceil(questions.lengt
 </script>
 </body>
 </html>
+
 
