@@ -230,33 +230,64 @@ async function extractTextFromImage(file) {
 }
 
 
-function buildMCQsFromText(text,total=MAX_QUESTIONS){
-  const sentences=text.replace(/\s+/g,' ').split(/(?<=[.?!])\s+/).filter(s=>s.length>30);
-  const pool=sentences.slice(0,1200);
-  const out=[]; let qid=0;
-  for(const s of pool){
+function buildMCQsFromText(text, total=MAX_QUESTIONS){
+  const interrogatives = ['who','what','which','where','when','why','how','whose'];
+  const relatives = ['who','whom','whose','which','that'];
+
+  const sentences = text.replace(/\s+/g,' ').split(/(?<=[.?!])\s+/).filter(s=>s.length>30);
+  const out = []; let qid=0;
+
+  for(const s of sentences){
     if(out.length>=total) break;
-    const cleaned=s.replace(/[\r\n]+/g,' ').trim();
-    const words=cleaned.split(/\s+/).map(w=>w.replace(/[^A-Za-z0-9\-']/g,'')).filter(w=>w.length>3);
-    if(words.length<5) continue;
-    const mid=Math.floor(words.length/2);
-    let correct=[words[mid],words[Math.max(1,mid-1)],words[Math.min(words.length-1,mid+1)]].find(w=>w&&w.length>=4)||words[mid];
-    correct=correct.replace(/[^A-Za-z0-9\-']/g,'').trim();
-    if(!correct) continue;
-    const distractors=[];
-    let attempts=0;
-    while(distractors.length<3 && attempts<200){
-      attempts++;
-      const cand=words[Math.floor(Math.random()*words.length)].replace(/[^A-Za-z0-9\-']/g,'').trim();
-      if(!cand) continue; if(slug(cand)===slug(correct)) continue; if(distractors.map(slug).includes(slug(cand))) continue;
-      distractors.push(cand);
+    const lower = s.toLowerCase();
+
+    let questionText = s.trim();
+    let options = [];
+    let answer = "";
+
+
+    const isQuestion = interrogatives.some(w => lower.includes(w+' ')) || relatives.some(w => lower.includes(w+' '));
+
+    const words = s.split(/\s+/).map(w=>w.replace(/[^A-Za-z0-9\-']/g,'')).filter(w=>w.length>3);
+
+    if(words.length < 4) continue;
+
+    if(isQuestion){
+      answer = words[Math.floor(Math.random()*words.length)];
+      const distractors = [];
+      let attempts=0;
+      while(distractors.length<3 && attempts<100){
+        attempts++;
+        const cand = words[Math.floor(Math.random()*words.length)];
+        if(slug(cand)===slug(answer)) continue;
+        if(distractors.map(slug).includes(slug(cand))) continue;
+        distractors.push(cand);
+      }
+      options = shuffle([answer,...distractors]).slice(0,4);
+    } else {
+      const mid = Math.floor(words.length/2);
+      answer = words[mid];
+      questionText = words.map((w,i)=>i===mid?'___':w).join(' ');
+      
+      const distractors = [];
+      let attempts=0;
+      while(distractors.length<3 && attempts<100){
+        attempts++;
+        const cand = words[Math.floor(Math.random()*words.length)];
+        if(slug(cand)===slug(answer)) continue;
+        if(distractors.map(slug).includes(slug(cand))) continue;
+        distractors.push(cand);
+      }
+      options = shuffle([answer,...distractors]).slice(0,4);
     }
-    if(distractors.length<3) continue;
-    const options=shuffle([correct,...distractors]).slice(0,4);
-    qid++; out.push({id:qid,q:cleaned,options,answer:correct});
+
+    qid++;
+    out.push({id:qid,q:questionText,options,answer});
   }
+
   return out;
 }
+
 
 window.__setAnswer=function(qid,opt){ userAnswers[qid]=opt; if(reviewMode) renderQuestions(); };
 
@@ -319,9 +350,11 @@ btnReshuffle.addEventListener('click', ()=>{ if(!questions.length) return; quest
 btnSubmit.addEventListener('click', ()=>{ if(!questions.length) return; let score=0; for(const q of questions) if(slug(userAnswers[q.id]||'')===slug(q.answer)) score++; scoreBox.textContent=`Your Score: ${score} / ${questions.length}`; scoreBox.style.display='block'; });
 btnReview.addEventListener('click', ()=>{ if(!questions.length) return; reviewMode=!reviewMode; btnReview.textContent = reviewMode ? 'Cancel Review' : 'Review'; renderQuestions(); });
 btnDownload.addEventListener('click', ()=>{ if(!questions.length) return; const { jsPDF } = window.jspdf; const doc = new jsPDF({unit:'pt', format:'a4'}); const pageWidth = doc.internal.pageSize.getWidth(); let y = 40; doc.setFont('Courier', 'normal'); doc.setFontSize(12); doc.text('AI MCQ Exam Questions', pageWidth/2, y, {align:'center'}); y+=30; questions.forEach((q,i)=>{ const questionText = `${i+1}. ${q.q}`; const optionsText = q.options.map((opt,j)=>`   ${String.fromCharCode(65+j)}. ${opt}`).join('\n'); const answerText = `Answer: ${q.answer}`; const lines = doc.splitTextToSize(questionText+'\n'+optionsText+'\n'+answerText, pageWidth-40); if(y + lines.length*14 > doc.internal.pageSize.getHeight()-40){ doc.addPage(); y=40; } doc.text(lines, 20, y); y += lines.length*14 + 10; }); doc.save('AI_MCQ_Exam.pdf'); });
-btnNew.addEventListener('click', ()=>{ extractedText=''; questions=[]; userAnswers={}; currentPage=0; examDiv.innerHTML=''; scoreBox.style.display='none'; pageInfo.textContent=''; reviewMode=false; btnReview.textContent='Review'; });
+btnNew.addEventListener('click', ()=>{ extractedText=''; questions=[]; userAnswers={}; currentPage=0; examDiv.innerHTML=''; scoreBox.style.display='none'; pageInfo.textContent=''; reviewMode=false; btnReview.textContent='Review';renderQuestions();const fileInput = document.querySelector('input[type="file"]');
+  if (fileInput) fileInput.value = '';});
 btnPrev.addEventListener('click', ()=>{ if(currentPage>0){ currentPage--; renderQuestions(); } });
 btnNext.addEventListener('click', ()=>{ if(currentPage<Math.ceil(questions.length/QUESTIONS_PER_PAGE)-1){ currentPage++; renderQuestions(); } });
 </script>
 </body>
 </html>
+
