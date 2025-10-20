@@ -330,7 +330,7 @@ btnGenerate.addEventListener('click', async ()=>{
   extractedText=await extractTextFromImage(imageFile);
   questions=buildMCQsFromText(extractedText,MAX_QUESTIONS);
   // --- Force at least 5 pages of questions ---
-const totalPages = 0;
+const totalPages = 5;
 const totalNeeded = QUESTIONS_PER_PAGE * totalPages;
 if (questions.length < totalNeeded) {
   // If not enough questions, repeat existing ones (reshuffle so it looks fresh)
