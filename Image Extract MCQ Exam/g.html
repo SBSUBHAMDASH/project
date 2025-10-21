@@ -147,7 +147,7 @@ header h1{ margin:0; font-size:1.6rem; }
 
 <div class="container">
   <div class="controls">
-    <input id="pdfInput" type="file" accept="image/*" />
+    <input id="pdfInput" type="file" accept="image/*" multiple />
     <button class="btn" id="btnGenerate">Generate</button>
     <button class="btn ghost" id="btnReshuffle">Reshuffle</button>
     <button class="btn" id="btnSubmit">Submit</button>
@@ -180,10 +180,10 @@ header h1{ margin:0; font-size:1.6rem; }
 </div>
 
 <script>
-const QUESTIONS_PER_PAGE = 50;
-const MAX_QUESTIONS = 500;
+const QUESTIONS_PER_PAGE = 10;
+const MAX_QUESTIONS = 100;
 
-let imageFile=null, extractedText='', questions=[], userAnswers={}, currentPage=0;
+let imageFiles = [], extractedText='', questions=[],questionsMaster = [], userAnswers={}, currentPage=0;
 let reviewMode=false;
 
 const pdfInput=document.getElementById('pdfInput');
@@ -204,7 +204,14 @@ function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.
 function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escapeForJS(s){ return String(s||'').replace(/'/g,"\\'").replace(/\n/g,' '); }
 
-pdfInput.addEventListener('change', e=>{ if(e.target.files[0]) imageFile=e.target.files[0]; });
+pdfInput.addEventListener('change', e => {
+  if (e.target.files.length) {
+    imageFiles = Array.from(e.target.files); // convert FileList to array
+  } else {
+    imageFiles = [];
+  }
+});
+
 
 async function extractTextFromImage(file) {
   const overlay = document.getElementById("loadingOverlay");
@@ -230,64 +237,47 @@ async function extractTextFromImage(file) {
 }
 
 
-function buildMCQsFromText(text, total=MAX_QUESTIONS){
+function buildMCQsFromText(text, total = 100) {
   const interrogatives = ['who','what','which','where','when','why','how','whose'];
   const relatives = ['who','whom','whose','which','that'];
 
-  const sentences = text.replace(/\s+/g,' ').split(/(?<=[.?!])\s+/).filter(s=>s.length>30);
-  const out = []; let qid=0;
+  // Split text into sentences
+  let sentences = text
+    .replace(/\s+/g, ' ')
+    .split(/\n|(?<=[.?!])\s+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 10);
 
-  for(const s of sentences){
-    if(out.length>=total) break;
-    const lower = s.toLowerCase();
+  if(sentences.length === 0) sentences = ["No text found."];
 
-    let questionText = s.trim();
-    let options = [];
-    let answer = "";
+  const out = [];
+  let qid = 1;
 
+  while(out.length < total) {
+    for(const s of sentences) {
+      if(out.length >= total) break;
 
-    const isQuestion = interrogatives.some(w => lower.includes(w+' ')) || relatives.some(w => lower.includes(w+' '));
+      let lower = s.toLowerCase();
+      const words = s.split(/\s+/).filter(w=>w.length>3);
+      if(words.length < 1) continue;
 
-    const words = s.split(/\s+/).map(w=>w.replace(/[^A-Za-z0-9\-']/g,'')).filter(w=>w.length>3);
+      let questionText = s;
+      let answer = words[Math.floor(Math.random() * words.length)];
+      let options = shuffle([answer, ...words.filter(w=>w!==answer).slice(0,3)]);
+      while(options.length < 4) options.push(answer); // fill if less than 4 options
 
-    if(words.length < 4) continue;
-
-    if(isQuestion){
-      answer = words[Math.floor(Math.random()*words.length)];
-      const distractors = [];
-      let attempts=0;
-      while(distractors.length<3 && attempts<100){
-        attempts++;
-        const cand = words[Math.floor(Math.random()*words.length)];
-        if(slug(cand)===slug(answer)) continue;
-        if(distractors.map(slug).includes(slug(cand))) continue;
-        distractors.push(cand);
+      // Make blank if not a question
+      if(!interrogatives.some(w=>lower.includes(w+' ')) && !relatives.some(w=>lower.includes(w+' '))) {
+        const mid = Math.floor(words.length / 2);
+        questionText = words.map((w,i)=>(i===mid?'___':w)).join(' ');
       }
-      options = shuffle([answer,...distractors]).slice(0,4);
-    } else {
-      const mid = Math.floor(words.length/2);
-      answer = words[mid];
-      questionText = words.map((w,i)=>i===mid?'___':w).join(' ');
-      
-      const distractors = [];
-      let attempts=0;
-      while(distractors.length<3 && attempts<100){
-        attempts++;
-        const cand = words[Math.floor(Math.random()*words.length)];
-        if(slug(cand)===slug(answer)) continue;
-        if(distractors.map(slug).includes(slug(cand))) continue;
-        distractors.push(cand);
-      }
-      options = shuffle([answer,...distractors]).slice(0,4);
+
+      out.push({id: qid++, q: questionText, options: shuffle(options), answer});
     }
-
-    qid++;
-    out.push({id:qid,q:questionText,options,answer});
   }
 
-  return out;
+  return out.slice(0, total);
 }
-
 
 window.__setAnswer=function(qid,opt){ userAnswers[qid]=opt; if(reviewMode) renderQuestions(); };
 
@@ -316,48 +306,79 @@ function renderQuestions(){
   pageInfo.textContent=`Page ${currentPage+1} of ${Math.ceil(questions.length/QUESTIONS_PER_PAGE)}`;
 }
 
-function updatePagerButtons(){
-  const totalPages=Math.ceil(questions.length/QUESTIONS_PER_PAGE);
-  btnPrev.disabled=currentPage===0;
-  btnNext.disabled=currentPage>=totalPages-1;
+function updatePagerButtons() {
+  const totalPages = Math.ceil(questions.length / QUESTIONS_PER_PAGE);
+  btnPrev.disabled = currentPage === 0 || questions.length <= QUESTIONS_PER_PAGE;
+  btnNext.disabled = currentPage >= totalPages - 1 || questions.length <= QUESTIONS_PER_PAGE;
 }
 
 function speak(text){ if(!text) return; const u=new SpeechSynthesisUtterance(text); u.rate=1; speechSynthesis.cancel(); speechSynthesis.speak(u); }
 
-btnGenerate.addEventListener('click', async ()=>{
-  if(!imageFile){ alert('Select an image first'); return; }
-  btnGenerate.disabled=true; btnGenerate.textContent='Extracting...';
-  extractedText=await extractTextFromImage(imageFile);
-  questions=buildMCQsFromText(extractedText,MAX_QUESTIONS);
-  // --- Force at least 5 pages of questions ---
-const totalPages = 5;
-const totalNeeded = QUESTIONS_PER_PAGE * totalPages;
-if (questions.length < totalNeeded) {
-  // If not enough questions, repeat existing ones (reshuffle so it looks fresh)
-  const copy = [...questions];
-  while (questions.length < totalNeeded) {
-    questions.push(...shuffle(copy.slice(0, Math.min(copy.length, totalNeeded - questions.length))));
+btnGenerate.addEventListener('click', async () => {
+  if (!imageFiles.length) { alert('Select at least one image'); return; }
+
+  btnGenerate.disabled = true;
+  btnGenerate.textContent = 'Extracting...';
+
+  let combinedText = '';
+  for (const file of imageFiles) {
+    combinedText += await extractTextFromImage(file) + '\n';
   }
-  // Use whatever questions were generated
-questions = questions.slice(0, Math.min(questions.length, MAX_QUESTIONS));
 
-}
+  extractedText = combinedText;
 
-  userAnswers={}; currentPage=0; scoreBox.style.display='none'; reviewMode=false;
+  // Build exactly 100 unique questions
+  questionsMaster = buildMCQsFromText(extractedText, 100);
+  questions = [...questionsMaster];
+
+  userAnswers = {};
+  currentPage = 0;
+  scoreBox.style.display = 'none';
+  reviewMode = false;
+
   renderQuestions();
-  btnGenerate.disabled=false; btnGenerate.textContent='Generate';
+
+  btnGenerate.disabled = false;
+  btnGenerate.textContent = 'Generate';
 });
 
-btnReshuffle.addEventListener('click', ()=>{ if(!questions.length) return; questions=shuffle(questions); currentPage=0; renderQuestions(); });
-btnSubmit.addEventListener('click', ()=>{ if(!questions.length) return; let score=0; for(const q of questions) if(slug(userAnswers[q.id]||'')===slug(q.answer)) score++; scoreBox.textContent=`Your Score: ${score} / ${questions.length}`; scoreBox.style.display='block'; });
+
+btnReshuffle.addEventListener('click', () => {
+  if (!questionsMaster.length) return;
+
+  // Reshuffle the master copy, reset current page
+  questions = shuffle([...questionsMaster]);
+  currentPage = 0;
+
+  renderQuestions();
+});
+
+
+btnPrev.addEventListener('click', () => {
+  if (currentPage > 0) {
+    currentPage--;
+    renderQuestions();
+  }
+});
+
+btnNext.addEventListener('click', () => {
+  const totalPages = Math.ceil(questions.length / QUESTIONS_PER_PAGE);
+  if (currentPage < totalPages - 1) {
+    currentPage++;
+    renderQuestions();
+  }
+});
+
+btnSubmit.addEventListener('click', ()=>{
+  if(!questions.length) return;
+  let score=0; for(const q of questions) if(slug(userAnswers[q.id]||'')===slug(q.answer)) score++;
+  scoreBox.textContent=`Your Score: ${score} / ${questions.length}`; scoreBox.style.display='block';
+});
 btnReview.addEventListener('click', ()=>{ if(!questions.length) return; reviewMode=!reviewMode; btnReview.textContent = reviewMode ? 'Cancel Review' : 'Review'; renderQuestions(); });
 btnDownload.addEventListener('click', ()=>{ if(!questions.length) return; const { jsPDF } = window.jspdf; const doc = new jsPDF({unit:'pt', format:'a4'}); const pageWidth = doc.internal.pageSize.getWidth(); let y = 40; doc.setFont('Courier', 'normal'); doc.setFontSize(12); doc.text('AI MCQ Exam Questions', pageWidth/2, y, {align:'center'}); y+=30; questions.forEach((q,i)=>{ const questionText = `${i+1}. ${q.q}`; const optionsText = q.options.map((opt,j)=>`   ${String.fromCharCode(65+j)}. ${opt}`).join('\n'); const answerText = `Answer: ${q.answer}`; const lines = doc.splitTextToSize(questionText+'\n'+optionsText+'\n'+answerText, pageWidth-40); if(y + lines.length*14 > doc.internal.pageSize.getHeight()-40){ doc.addPage(); y=40; } doc.text(lines, 20, y); y += lines.length*14 + 10; }); doc.save('AI_MCQ_Exam.pdf'); });
 btnNew.addEventListener('click', ()=>{ extractedText=''; questions=[]; userAnswers={}; currentPage=0; examDiv.innerHTML=''; scoreBox.style.display='none'; pageInfo.textContent=''; reviewMode=false; btnReview.textContent='Review';renderQuestions();const fileInput = document.querySelector('input[type="file"]');
   if (fileInput) fileInput.value = '';});
-btnPrev.addEventListener('click', ()=>{ if(currentPage>0){ currentPage--; renderQuestions(); } });
-btnNext.addEventListener('click', ()=>{ if(currentPage<Math.ceil(questions.length/QUESTIONS_PER_PAGE)-1){ currentPage++; renderQuestions(); } });
-</script>
+</script>  
 </body>
 </html>
-
 
