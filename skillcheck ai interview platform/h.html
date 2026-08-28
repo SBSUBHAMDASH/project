@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="SkillCheck AI - Smart technical interview practice and skill analysis."
+    >
+
+    <title>SkillCheck AI — Interview Intelligence</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="site-header">
+
+        <div class="logo">
+            SkillCheck <span>AI</span>
+        </div>
+
+        <div class="tagline">
+            Interview Intelligence Platform
+        </div>
+
+    </header>
+    <main>
+
+        <section
+            id="startScreen"
+            class="card landing-card">
+            <div class="ai-badge">
+
+                <span class="badge-dot"></span>
+
+                <span>
+                    INTERVIEW INTELLIGENCE
+                </span>
+
+                <span class="badge-sparkle">
+                    ✦
+                </span>
+
+            </div>
+            <div class="hero-content">
+
+                <h1>
+
+                    Turn your knowledge
+
+                    <br>
+
+                    into
+
+                    <span class="gradient-text">
+                        confidence.
+                    </span>
+
+                </h1>
+
+                <p class="description">
+
+                    Practice realistic technical interview questions,
+                    evaluate your answers, and discover the areas
+                    you need to improve.
+
+                </p>
+
+            </div>
+            <div class="feature-pills">
+
+                <div class="feature-pill">
+                    <span>⚡</span>
+                    Instant Evaluation
+                </div>
+
+                <div class="feature-pill">
+                    <span>◈</span>
+                    Skill Analysis
+                </div>
+
+                <div class="feature-pill">
+                    <span>↗</span>
+                    Personalized Practice
+                </div>
+
+            </div>
+            <div class="configuration">
+
+                <div class="section-label">
+
+                    <span class="line"></span>
+
+                    CONFIGURE YOUR SESSION
+
+                    <span class="line"></span>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="role">
+                            TARGET ROLE
+                        </label>
+
+                        <select id="role">
+
+                            <option value="frontend">
+                                Frontend Developer
+                            </option>
+
+                            <option value="backend">
+                                Backend Developer
+                            </option>
+
+                            <option value="javascript">
+                                JavaScript Developer
+                            </option>
+
+                            <option value="python">
+                                Python Developer
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="difficulty">
+                            DIFFICULTY
+                        </label>
+
+                        <select id="difficulty">
+
+                            <option value="easy">
+                                Easy
+                            </option>
+
+                            <option value="medium">
+                                Medium
+                            </option>
+
+                            <option value="hard">
+                                Hard
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    onclick="startTest()"
+                    class="start-button"
+                >
+
+                    <span class="button-icon">
+                        ◉
+                    </span>
+
+                    Start Interview
+
+                    <span class="button-arrow">
+                        →
+                    </span>
+
+                </button>
+
+            </div>
+            <div class="landing-stats">
+
+                <div class="stat-item">
+
+                    <strong>
+                        05
+                    </strong>
+
+                    <span>
+                        Questions
+                    </span>
+
+                </div>
+
+
+                <div class="stat-divider"></div>
+
+
+                <div class="stat-item">
+
+                    <strong>
+                        03
+                    </strong>
+
+                    <span>
+                        Difficulty Levels
+                    </span>
+
+                </div>
+
+
+                <div class="stat-divider"></div>
+
+
+                <div class="stat-item">
+
+                    <strong>
+                        04
+                    </strong>
+
+                    <span>
+                        Career Tracks
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+        <section
+            id="quizScreen"
+            class="card quiz-card hidden"
+        >
+        <button
+    type="button"
+    class="home-button"
+    onclick="goHome()"
+    aria-label="Return to home"
+>
+    <span>⌂</span>
+    Home
+</button>
+            <div class="quiz-header">
+
+                <div>
+
+                    <div class="mini-badge">
+
+                        <span class="badge-dot"></span>
+
+                        LIVE INTERVIEW
+
+                    </div>
+
+                    <p class="quiz-label">
+                        TECHNICAL ASSESSMENT
+                    </p>
+
+                </div>
+
+
+                <div class="score-display">
+
+                    <span class="score-label">
+                        CURRENT SCORE
+                    </span>
+
+                    <span id="score">
+                        Score: 0
+                    </span>
+
+                </div>
+
+            </div>
+            <div class="progress-container">
+
+                <div class="progress-info">
+
+                    <span id="questionNumber">
+                        Question 1 / 5
+                    </span>
+
+                    <span id="progressPercent">
+                        20%
+                    </span>
+
+                </div>
+
+
+                <div class="progress">
+
+                    <div id="progressBar"></div>
+
+                </div>
+
+            </div>
+            <div class="question-wrapper">
+
+                <div class="question-number-large">
+                    01
+                </div>
+
+
+                <div class="question-content">
+
+                    <span class="question-type">
+                        TECHNICAL QUESTION
+                    </span>
+
+                    <h2 id="question">
+                        Question goes here
+                    </h2>
+
+                </div>
+
+            </div>
+            <div class="answer-section">
+
+                <div class="answer-header">
+
+                    <label for="answer">
+                        YOUR ANSWER
+                    </label>
+
+                    <span>
+                        Be clear and concise
+                    </span>
+
+                </div>
+
+
+                <textarea
+                    id="answer"
+                    placeholder="Explain your answer here..."
+                ></textarea>
+
+            </div>
+            <div class="buttons">
+
+                <button
+                    onclick="checkAnswer()"
+                    class="primary-action"
+                >
+
+                    Evaluate Answer
+
+                    <span>
+                        →
+                    </span>
+
+                </button>
+
+
+                <button
+                    onclick="showAnswer()"
+                    class="secondary"
+                >
+
+                    <span>
+                        ◉
+                    </span>
+
+                    View Model Answer
+
+                </button>
+
+            </div>
+            <div
+                id="result"
+                class="answer-result"
+            ></div>
+            <button
+                id="nextButton"
+                class="next-button hidden"
+                onclick="nextQuestion()"
+            >
+
+                Continue to Next Question
+
+                <span>
+                    →
+                </span>
+
+            </button>
+
+        </section>
+        <section
+            id="resultScreen"
+            class="card result-card hidden"
+        >
+
+            <div class="result-glow"></div>
+
+
+            <div class="result-icon">
+                ✦
+            </div>
+
+
+            <div class="result-badge">
+                ASSESSMENT COMPLETE
+            </div>
+
+
+            <h1>
+
+                Your interview
+
+                <br>
+
+                <span class="gradient-text">
+                    intelligence report.
+                </span>
+
+            </h1>
+
+
+            <p class="description">
+
+                Here's how you performed in this interview session.
+
+            </p>
+            <div class="score-orbit">
+
+                <div class="score-inner">
+
+                    <span id="finalScore">
+                        0
+                    </span>
+
+                    <small>
+                        / 5
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <h2 id="performance">
+                Good job!
+            </h2>
+            <div class="analysis-grid">
+
+                <div class="analysis-card weak-box">
+
+                    <div class="analysis-icon">
+                        ⚠
+                    </div>
+
+                    <div>
+
+                        <span class="analysis-label">
+                            AREA TO IMPROVE
+                        </span>
+
+                        <h3 id="weakArea">
+                            JavaScript
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+                <div class="analysis-card recommendation">
+
+                    <div class="analysis-icon">
+                        ✦
+                    </div>
+
+                    <div>
+
+                        <span class="analysis-label">
+                            RECOMMENDATION
+                        </span>
+
+                        <p id="recommendation">
+                            Keep practicing.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <button
+                onclick="restartTest()"
+                class="start-button"
+            >
+
+                Practice Again
+
+                <span class="button-arrow">
+                    ↻
+                </span>
+
+            </button>
+
+        </section>
+
+    </main>
+    <footer>
+
+        <span class="footer-brand">
+            SKILLCHECK AI
+        </span>
+
+        <span class="footer-dot">
+            •
+        </span>
+
+        Built for smarter interview preparation
+
+        <span class="footer-version">
+            v1.0
+        </span>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
